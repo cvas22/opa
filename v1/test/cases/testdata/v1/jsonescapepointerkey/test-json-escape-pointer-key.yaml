@@ -1,0 +1,99 @@
+---
+cases:
+  - note: jsonescapepointerkey/no special characters
+    query: data.test.p = x
+    modules:
+      - |
+        package test
+
+        p := json.escape_pointer_key("foo")
+    want_result:
+      - x: foo
+  - note: jsonescapepointerkey/empty string
+    query: data.test.p = x
+    modules:
+      - |
+        package test
+
+        p := json.escape_pointer_key("")
+    want_result:
+      - x: ""
+  - note: jsonescapepointerkey/slash
+    query: data.test.p = x
+    modules:
+      - |
+        package test
+
+        p := json.escape_pointer_key("a/b")
+    want_result:
+      - x: a~1b
+  - note: jsonescapepointerkey/tilde
+    query: data.test.p = x
+    modules:
+      - |
+        package test
+
+        p := json.escape_pointer_key("m~n")
+    want_result:
+      - x: m~0n
+  - note: jsonescapepointerkey/tilde escaped before slash
+    query: data.test.p = x
+    modules:
+      - |
+        package test
+
+        p := json.escape_pointer_key("~1/~0")
+    want_result:
+      - x: ~01~1~00
+  - note: jsonescapepointerkey/only special characters
+    query: data.test.p = x
+    modules:
+      - |
+        package test
+
+        p := json.escape_pointer_key("//~~")
+    want_result:
+      - x: ~1~1~0~0
+  - note: jsonescapepointerkey/non-ascii
+    query: data.test.p = x
+    modules:
+      - |
+        package test
+
+        p := json.escape_pointer_key("ü/ß~")
+    want_result:
+      - x: ü~1ß~0
+  - note: jsonescapepointerkey/round trip with json.patch
+    query: data.test.p = x
+    modules:
+      - |
+        package test
+
+        key := "kubernetes.io/role~x"
+
+        p := json.patch({}, [{"op": "add", "path": concat("/", ["", json.escape_pointer_key(key)]), "value": 1}])
+    want_result:
+      - x:
+          kubernetes.io/role~x: 1
+  - note: jsonescapepointerkey/round trip with json.remove
+    query: data.test.p = x
+    modules:
+      - |
+        package test
+
+        p := json.remove({"a/b": 1, "c~d": 2, "e": 3}, [concat("/", ["", json.escape_pointer_key("a/b")]), json.escape_pointer_key("c~d")])
+    want_result:
+      - x:
+          e: 3
+  - note: jsonescapepointerkey/non-string input
+    query: data.test.p = x
+    modules:
+      - |
+        package test
+
+        p := json.escape_pointer_key(input.x)
+    input:
+      x: 1
+    want_error_code: eval_type_error
+    want_error: "json.escape_pointer_key: operand 1 must be string but got number"
+    strict_error: true

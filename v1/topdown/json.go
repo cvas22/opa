@@ -370,10 +370,26 @@ func builtinJSONPatch(_ BuiltinContext, operands []*ast.Term, iter func(*ast.Ter
 	return iter(patched)
 }
 
+var jsonPointerEscaper = strings.NewReplacer("~", "~0", "/", "~1")
+
+func builtinJSONEscapePointerKey(_ BuiltinContext, operands []*ast.Term, iter func(*ast.Term) error) error {
+	key, err := builtins.StringOperand(operands[0].Value, 1)
+	if err != nil {
+		return err
+	}
+
+	if !strings.ContainsAny(string(key), "~/") {
+		return iter(operands[0])
+	}
+
+	return iter(ast.StringTerm(jsonPointerEscaper.Replace(string(key))))
+}
+
 func init() {
 	ast.InternStringTerm("op", "path", "from", "value", "add", "remove", "replace", "move", "copy", "test")
 
 	RegisterBuiltinFunc(ast.JSONFilter.Name, builtinJSONFilter)
 	RegisterBuiltinFunc(ast.JSONRemove.Name, builtinJSONRemove)
 	RegisterBuiltinFunc(ast.JSONPatch.Name, builtinJSONPatch)
+	RegisterBuiltinFunc(ast.JSONEscapePointerKey.Name, builtinJSONEscapePointerKey)
 }

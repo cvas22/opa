@@ -197,6 +197,7 @@ var DefaultBuiltins = [...]*Builtin{
 	JSONFilter,
 	JSONRemove,
 	JSONPatch,
+	JSONEscapePointerKey,
 
 	// Tokens
 	JWTDecode,
@@ -1715,6 +1716,22 @@ var JSONPatch = &Builtin{
 			)).Description("the JSON patches to apply"),
 		),
 		types.Named("output", types.A).Description("result obtained after consecutively applying all patch operations in `patches`"),
+	),
+	Categories:  objectCat,
+	CanSkipBctx: true,
+}
+
+var JSONEscapePointerKey = &Builtin{
+	Name: "json.escape_pointer_key",
+	Description: "Escapes a string for use as a single reference token in a JSON pointer according to RFC6901, " +
+		"replacing `~` with `~0` and `/` with `~1`. " +
+		"For example: `json.escape_pointer_key(\"a/b~c\")` results in `\"a~1b~0c\"`, " +
+		"which can be used in paths like `concat(\"/\", [\"\", json.escape_pointer_key(key)])` for `json.patch`.",
+	Decl: types.NewFunction(
+		types.Args(
+			types.Named("key", types.S).Description("the key to escape"),
+		),
+		types.Named("output", types.S).Description("`key` with `~` and `/` escaped"),
 	),
 	Categories:  objectCat,
 	CanSkipBctx: true,

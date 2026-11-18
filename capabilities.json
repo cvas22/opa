@@ -2179,6 +2179,20 @@
       }
     },
     {
+      "name": "json.escape_pointer_key",
+      "decl": {
+        "args": [
+          {
+            "type": "string"
+          }
+        ],
+        "result": {
+          "type": "string"
+        },
+        "type": "function"
+      }
+    },
+    {
       "name": "json.filter",
       "decl": {
         "args": [
